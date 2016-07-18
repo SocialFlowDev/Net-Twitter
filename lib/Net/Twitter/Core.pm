@@ -18,6 +18,7 @@ use Encode qw/encode_utf8/;
 use DateTime;
 use Data::Visitor::Callback;
 use Try::Tiny;
+use SocialFlow::Log::Contextual qw[ :dlog ];
 
 use namespace::autoclean;
 
@@ -253,6 +254,8 @@ sub _inflate_objects { return $_[2] }
 
 sub _parse_result {
     my ($self, $res, $args, $datetime_parser) = @_;
+
+    Dlog_warn { "response :". $_ } $res;
 
     # workaround for Laconica API returning bools as strings
     # (Fixed in Laconi.ca 0.7.4)
