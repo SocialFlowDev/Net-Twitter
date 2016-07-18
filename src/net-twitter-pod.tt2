@@ -41,35 +41,6 @@ version [% VERSION %]
            "Twitter error.....: ", $err->error, "\n";
   }
 
-=head1 TWITTER NOW REQUIRES SSL
-
-B<Deprecation cycle>. Twitter now requires SSL connections for API calls. To
-enable SSL, add C<( ssl =E<gt> 1)> to the options passed to new. E.g.,
-
-    my $nt = Net::Twitter->new(
-        traits              => [qw/API::RESTv1_1 RetryOnError/],
-        consumer_key        => $key,
-        consumer_secret     => $secret,
-        access_token        => $token,
-        access_token_secret => $token_secret,
-        ssl                 => 1,  ## enable SSL! ##
-    );
-
-This version will warn if no C<ssl> option is passed to C<new>. For backwards
-compatibility, the default in this version remains SSL disabled. A future
-release will change the default to SSL enabled and remove the warning. Add
-C<( ssl =E<gt> 0 )> to disable the warning and keep SSL disabled.
-
-B<Why not just make the default SSL enabled, now?> Net::Twitter has always
-tried to adhere to a strict policy of backwards compatibility. An upgrade to
-Net::Twitter should not break or significantly change the behavior of existing
-code that relies on it. Net::Twitter is used by some for Twitter API compatible
-services that may or may not require SSL, and for some private test services
-that require non-SSL connections. They shouldn't break when Net::Twitter is
-upgraded. This deprecation cycle is the minimally invasive change that lets
-user know about Twitter's change without significantly changing the behavior
-for anyone upgrading.
-
 =head1 TWITTER API V1.1 SUPPORT
 
 This version of Net::Twitter provides Twitter API v1.1 support. Enable it by
@@ -167,6 +138,31 @@ Provides support for the Twitter REST API version 1.1 methods.
 =item API::Search
 
 Provides support for the Twitter Search API methods.
+
+=item AppAuth
+
+Provides L<Application-Only
+Authentication|https://dev.twitter.com/oauth/application-only> with methods,
+C<request_access_token> and C<invalidate_token>. See
+L<Net::Twitter::Role::AppAuth>.
+
+Example:
+
+    my $nt = Net::Twitter->new(
+        traits          => [ qw/AppAuth API::RESTv1_1/ ],
+        consumer_key    => 'my-consumer-key',
+        consumer_secret => 'my-consumer-secret',
+    );
+
+    $nt->request_access_token;
+    say 'token: ', $nt->access_token;
+    my $r = $nt->followers_ids({
+        screen_name => 'timtoady',
+        cursor      => -1,
+    });
+
+    # good until invalidated, with ...
+    $nt->invalidate_token
 
 =item AutoCursor
 
@@ -310,8 +306,7 @@ C<useragent_class>, above.  It defaults to {} (an empty HASH ref).
 =item useragent
 
 The value for C<User-Agent> HTTP header.  It defaults to
-"Net::Twitter/$VERSION (Perl)", where C<$VERSION> is the current version of
-C<Net::Twitter>.
+"Net::Twitter/[% VERSION %] (Perl)".
 
 =item source
 
@@ -353,7 +348,7 @@ the C<OAuth> trait is included.
 
 =item ssl
 
-If set to 1, an SSL connection will be used for all API calls. Defaults to 0.
+If set to 1, an SSL connection will be used for all API calls. Defaults to 1.
 
 =item netrc
 
@@ -399,7 +394,7 @@ C<Net::Twitter>.  Use it with caution.
 
 =head1 AUTHENTICATION
 
-With REST API version 1.1, all API calls require OAuth. Since 
+With REST API version 1.1, all API calls require OAuth. Since
 31-Aug-2010, version 1 required OAuth requests requiring authentication.  Other
 Twitter compatible services, like Identi.ca, accept Basic Authentication.  So,
 C<Net::Twitter> provides support for both.
@@ -820,9 +815,13 @@ Justin Hunter <justin.d.hunter@gmail.com>
 
 Allen Haim <allen@netherrealm.net>
 
+Joe Papperello (@antipasta on Github and Twitter)
+
+Samuel Kaugman (ediblenergy on Github)
+
 =head1 LICENSE
 
-Copyright (c) 2009-2011 Marc Mims
+Copyright (c) 2009-2014 Marc Mims
 
 The Twitter API itself, and the description text used in this module is:
 

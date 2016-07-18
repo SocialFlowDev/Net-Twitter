@@ -6,6 +6,8 @@ use Net::Twitter::API;
 use DateTime::Format::Strptime;
 use URI;
 
+with 'Net::Twitter::Role::API::UploadMedia';
+
 # API v1.1 incorporates the Search and Upload APIs
 excludes map "Net::Twitter::Role::$_", qw/API::Search API::Upload Net::Twitter::Role::RateLimit/;
 
@@ -130,52 +132,52 @@ authenticating user must be the author of the specified status.
 twitter_api_method update => (
     path       => 'statuses/update',
     method     => 'POST',
-    params     => [qw/status lat long place_id display_coordinates in_reply_to_status_id trim_user/],
+    params     => [qw/media_ids status lat long place_id display_coordinates in_reply_to_status_id trim_user/],
     required   => [qw/status/],
     booleans   => [qw/display_coordinates trim_user/],
     add_source => 1,
     returns    => 'Status',
-    description => <<'EOT',
+    description => <<EOT,
 
 Updates the authenticating user's status.  Requires the status parameter
 specified.  A status update with text identical to the authenticating
 user's current status will be ignored.
 
-=over 4
+\=over 4
 
-=item status
+\=item status
 
 Required.  The text of your status update. URL encode as necessary. Statuses
 over 140 characters will cause a 403 error to be returned from the API.
 
-=item in_reply_to_status_id
+\=item in_reply_to_status_id
 
 Optional. The ID of an existing status that the update is in reply to.  o Note:
 This parameter will be ignored unless the author of the tweet this parameter
 references is mentioned within the status text. Therefore, you must include
-@username, where username is the author of the referenced tweet, within the
+\@username, where username is the author of the referenced tweet, within the
 update.
 
-=item lat
+\=item lat
 
 Optional. The location's latitude that this tweet refers to.  The valid ranges
 for latitude is -90.0 to +90.0 (North is positive) inclusive.  This parameter
 will be ignored if outside that range, if it is not a number, if geo_enabled is
 disabled, or if there not a corresponding long parameter with this tweet.
 
-=item long
+\=item long
 
 Optional. The location's longitude that this tweet refers to.  The valid ranges
 for longitude is -180.0 to +180.0 (East is positive) inclusive.  This parameter
 will be ignored if outside that range, if it is not a number, if geo_enabled is
 disabled, or if there not a corresponding lat parameter with this tweet.
 
-=item place_id
+\=item place_id
 
 Optional. The place to attach to this status update.  Valid place_ids can be
 found by querying C<reverse_geocode>.
 
-=item display_coordinates
+\=item display_coordinates
 
 Optional. By default, geo-tweets will have their coordinates exposed in the
 status object (to remain backwards compatible with existing API applications).
@@ -183,7 +185,7 @@ To turn off the display of the precise latitude and longitude (but keep the
 contextual location information), pass C<display_coordinates => 0> on the
 status update.
 
-=back
+\=back
 
 EOT
 
@@ -1398,7 +1400,7 @@ Returns details of a place returned from the C<reverse_geocode> method.
 );
 
 twitter_api_method reverse_geocode => (
-    description => <<'EOT',
+    description => <<EOT,
 Search for places (cities and neighborhoods) that can be attached to a
 statuses/update.  Given a latitude and a longitude, return a list of all the
 valid places that can be used as a place_id when updating a status.
@@ -1410,19 +1412,19 @@ There are multiple granularities of places that can be returned --
 "neighborhoods", "cities", etc.  At this time, only United States data is
 available through this method.
 
-=over 4
+\=over 4
 
-=item lat
+\=item lat
 
 Required.  The latitude to query about.  Valid ranges are -90.0 to +90.0 (North
 is positive) inclusive.
 
-=item long
+\=item long
 
 Required. The longitude to query about.  Valid ranges are -180.0 to +180.0
 (East is positive) inclusive.
 
-=item accuracy
+\=item accuracy
 
 Optional. A hint on the "region" in which to search.  If a number, then this is
 a radius in meters, but it can also take a string that is suffixed with ft to
@@ -1431,19 +1433,19 @@ coming from a device, in practice, this value is whatever accuracy the device
 has measuring its location (whether it be coming from a GPS, WiFi
 triangulation, etc.).
 
-=item granularity
+\=item granularity
 
 Optional.  The minimal granularity of data to return.  If this is not passed
 in, then C<neighborhood> is assumed.  C<city> can also be passed.
 
-=item max_results
+\=item max_results
 
 Optional.  A hint as to the number of results to return.  This does not
 guarantee that the number of results returned will equal max_results, but
 instead informs how many "nearby" results to return.  Ideally, only pass in the
 number of places you intend to display to the user here.
 
-=back
+\=back
 
 EOT
 
@@ -2035,6 +2037,79 @@ used to retrieve each variation of the banner.
     params   => [qw/user_id screen_name/],
     required => [qw//],
     returns  => 'HashRef',
+);
+
+twitter_api_method mutes => (
+    description => <<'',
+Returns an array of numeric user ids the authenticating user has muted.
+
+    path     => 'mutes/users/ids',
+    aliases  => [qw/muting_ids muted_ids/],
+    method   => 'GET',
+    params   => [qw/cursor/],
+    required => [qw//],
+    booleans => [qw//],
+    returns  => 'ArrayRef[Int]',
+);
+
+twitter_api_method muting => (
+    description => <<'',
+Returns an array of user objects that the authenticating user is muting.
+
+    path     => 'mutes/users/list',
+    aliases  => [qw/mutes_list/],
+    method   => 'GET',
+    params   => [qw/cursor include_entities skip_status/],
+    required => [qw//],
+    returns  => 'ArrayRef[BasicUser]',
+);
+
+twitter_api_method create_mute => (
+    description => <<'',
+Mutes the user specified in the C<user_id> or C<screen_name> parameter as the
+authenticating user.  Returns the muted user when successful.  You can find
+out more about muting in the Twitter Support Knowledge Base.
+
+    path     => 'mutes/users/create',
+    method   => 'POST',
+    params   => [qw/user_id screen_name/],
+    booleans => [qw//],
+    required => [qw/id/],
+    returns  => 'BasicUser',
+);
+
+twitter_api_method destroy_mute => (
+    description => <<'',
+Un-mutes the user specified in the C<user_id> or C<screen_name> parameter as
+the authenticating user.  Returns the un-muted user when successful.
+
+    path     => 'mutes/users/destroy',
+    method   => 'POST',
+    params   => [qw/user_id screen_name/],
+    booleans => [qw//],
+    required => [qw/id/],
+    returns  => 'BasicUser',
+);
+
+twitter_api_method lookup_statuses => (
+    description => <<'',
+Returns a hash reference of tweets from an arbitrary set of ids.
+
+    path     => 'statuses/lookup',
+    method   => 'GET',
+    params   => [qw/id include_entities trim_user map/],
+    required => [qw/id/],
+    returns  => 'HashRef',
+);
+
+twitter_api_method create_media_metadata => (
+    path        => 'media/metadata/create',
+    method      => 'POST',
+    params      => [qw/media_id alt_text/],
+    required    => [qw/media_id/],
+    returns     => 'HashRef',
+    description => 'add metadata to media',
+    content_type => 'application/json'
 );
 
 # infer screen_name or user_id from positional args for backwards compatibility

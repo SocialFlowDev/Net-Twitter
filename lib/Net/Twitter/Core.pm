@@ -1,7 +1,5 @@
 package Net::Twitter::Core;
 
-our $VERSION = '4.01002';
-
 # ABSTRACT: A perl interface to the Twitter API
 
 use 5.008001;
@@ -40,7 +38,7 @@ has _base_url       => ( is => 'rw' ); ### keeps role composition from bitching 
 has _json_handler   => (
     is      => 'rw',
     default => sub { JSON->new->utf8 },
-    handles => { _from_json => 'decode' },
+    handles => { from_json => 'decode' },
 );
 
 sub _legacy_synthetic_args { qw/authenticate since/ }
@@ -63,22 +61,8 @@ around BUILDARGS => sub {
 
     my %options = @_ == 1 ? %{$_[0]} : @_;
 
-    # Twitter now requires SSL connections. Since Net::Twitter is used for
-    # Twitter API compatible services that may not require, or indeed allow
-    # SSL, we won't change the default, yet. We'll have a deprecation cycle
-    # where we warn users if they don't have an ssl option set and let them
-    # know enabling ssl will be the default in the future.
-    unless ( exists $options{ssl} ) {
-        warn <<'';
-The Twitter API now requires SSL. Add ( ssl => 1 ) to the options passed to new
-to enable it.  For backwards compatibility, SSL is disabled by default in this
-version. Passing the ssl option to new will disable this warning. If you are
-using a Twitter API compatbile service that does not support SSL, add
-( ssl => 0 ) to disable this warning and preserve non-SSL connections in future
-upgrades.
-
-        $options{ssl} = 0;
-    }
+    # Default to ssl
+    $options{ssl} = 1 unless exists $options{ssl};
 
     # aliases
     for ( [ user => 'username' ], [ pass => 'password' ] ) {
@@ -167,38 +151,48 @@ sub _encode_args {
 }
 
 sub _json_request { 
-    my ($self, $http_method, $uri, $args, $authenticate, $dt_parser) = @_;
-    
-    my $msg = $self->_prepare_request($http_method, $uri, $args, $authenticate);
+    my ($self, $http_method, $uri, $args, $authenticate, $dt_parser, $content_type ) = @_;
+
+    my $msg = $self->_prepare_request($http_method, $uri, $args, $authenticate, $content_type);
     my $res = $self->_send_request($msg);
 
     return $self->_parse_result($res, $args, $dt_parser);
 }
 
 sub _prepare_request {
-    my ($self, $http_method, $uri, $args, $authenticate) = @_;
+    my ($self, $http_method, $uri, $args, $authenticate, $content_type ) = @_;
 
     my $msg;
 
     my %natural_args = $self->_natural_args($args);
 
     $self->_encode_args(\%natural_args);
-
-    if ( $http_method =~ /^(?:GET|DELETE|PUT)$/ ) {
+    if( $http_method eq 'PUT' ) {
+        $msg = PUT(
+            $uri,
+            'Content-Type' => 'application/x-www-form-urlencoded',
+            Content        => $self->_query_string_for( \%natural_args ) );
+    }
+    elsif ( $http_method =~ /^(?:GET|DELETE)$/ ) {
         $uri->query($self->_query_string_for(\%natural_args));
         $msg = HTTP::Request->new($http_method, $uri);
     }
     elsif ( $http_method eq 'POST' ) {
-        # if any of the arguments are (array) refs, use form-data
-        $msg = (first { ref } values %natural_args)
-             ? POST($uri,
-                    Content_Type => 'form-data',
-                    Content      => [
-                        map { ref $_ ? $_ : encode_utf8 $_ } %natural_args,
-                    ],
-               )
-             : POST($uri, Content => $self->_query_string_for(\%natural_args))
-             ;
+        if( $content_type && $content_type eq 'application/json' ) {
+            $msg = POST( $uri,  Content_Type => 'application/json', Content =>  encode_json \%natural_args );
+        }
+        else {
+            # if any of the arguments are (array) refs, use form-data
+            $msg = (first { ref } values %natural_args)
+                ? POST($uri,
+                       Content_Type => 'form-data',
+                       Content      => [
+                           map { ref $_ ? $_ : encode_utf8 $_ } %natural_args,
+                       ],
+                )
+                : POST($uri, Content => $self->_query_string_for(\%natural_args))
+                ;
+        }
     }
     else {
         croak "unexpected HTTP method: $http_method";
@@ -262,7 +256,8 @@ sub _parse_result {
     my $content = $res->content;
     $content =~ s/^"(true|false)"$/$1/;
 
-    my $obj = try { $self->_from_json($content) };
+    my $obj = length $content ? try { $self->_from_json($content) } : {};
+
     $self->_decode_html_entities($obj) if $obj && $self->decode_html_entities;
 
     # filter before inflating objects
