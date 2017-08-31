@@ -4,10 +4,6 @@ use Moose::Role;
 use Net::Twitter::API;
 use DateTime::Format::Strptime;
 
-with 'Net::Twitter::Role::API::Media::Analytics';
-with 'Net::Twitter::Role::API::Media::Library';
-with 'Net::Twitter::Role::API::Media::User';
-
 has media_api_url => (
     isa => 'Str',
     is => 'rw',
@@ -20,8 +16,8 @@ after BUILD => sub {
     $self->{media_api_url} =~ s/^http:/https:/ if $self->ssl;
 };
 
-base_url = 'media_api_url';
-authenticate = 1;
+base_url 'media_api_url';
+authenticate 1;
 
 our $DATETIME_PARSER = DateTime::Format::Strptime->new(pattern => '%a %b %d %T %z %Y');
 datetime_parser $DATETIME_PARSER;
@@ -30,7 +26,7 @@ twitter_api_method get_video_analytics => (
     path => 'media/analytics/video.json',
     method => 'GET',
     params => [qw/media_keys owner_id from_timestamp to_timestamp/],
-    required => [qw/media_keys ownder_id/],
+    required => [qw/media_keys owner_id/],
     returns => 'HashRef',
     description => <<'',
 Returns video analytics metrics including organic stats, top tweet, and playback stats.
