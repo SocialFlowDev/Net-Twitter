@@ -5,20 +5,21 @@ use Net::Twitter::API;
 use DateTime::Format::Strptime;
 use namespace::autoclean;
 
+with 'Net::Twitter::Role::API::RESTv1_1';
 
-has media_api_url => (
-    isa => 'Str',
-    is => 'rw',
-    default => 'http://api.twitter.com/1.1',
-);
+#has media_api_url => (
+#    isa => 'Str',
+#    is => 'rw',
+#    default => 'http://api.twitter.com/1.1',
+#);
+#
+#after BUILD => sub {
+#    my $self = shift;
+#
+#    $self->{media_api_url} =~ s/^http:/https:/ if $self->ssl;
+#};
 
-after BUILD => sub {
-    my $self = shift;
-
-    $self->{media_api_url} =~ s/^http:/https:/ if $self->ssl;
-};
-
-base_url 'media_api_url';
+base_url 'apiurl';
 authenticate 1;
 
 our $DATETIME_PARSER = DateTime::Format::Strptime->new(pattern => '%a %b %d %T %z %Y');
