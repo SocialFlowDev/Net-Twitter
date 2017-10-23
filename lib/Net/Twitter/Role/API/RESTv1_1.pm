@@ -6,8 +6,7 @@ use Net::Twitter::API;
 use DateTime::Format::Strptime;
 use URI;
 
-with 'Net::Twitter::Role::API::UploadMedia';
-with 'Net::Twitter::Role::API::Media';
+with qw/Net::Twitter::Role::API::UploadMedia Net::Twitter::Role::API::Media/;
 
 # API v1.1 incorporates the Search and Upload APIs
 excludes map "Net::Twitter::Role::$_", qw/API::Search API::Upload Net::Twitter::Role::RateLimit/;

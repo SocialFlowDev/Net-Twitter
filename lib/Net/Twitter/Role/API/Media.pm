@@ -5,8 +5,6 @@ use Net::Twitter::API;
 use DateTime::Format::Strptime;
 use namespace::autoclean;
 
-with 'Net::Twitter::Role::API::RESTv1_1';
-
 base_url 'apiurl';
 authenticate 1;
 
