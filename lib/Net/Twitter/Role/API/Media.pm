@@ -7,18 +7,6 @@ use namespace::autoclean;
 
 with 'Net::Twitter::Role::API::RESTv1_1';
 
-#has media_api_url => (
-#    isa => 'Str',
-#    is => 'rw',
-#    default => 'http://api.twitter.com/1.1',
-#);
-#
-#after BUILD => sub {
-#    my $self = shift;
-#
-#    $self->{media_api_url} =~ s/^http:/https:/ if $self->ssl;
-#};
-
 base_url 'apiurl';
 authenticate 1;
 
