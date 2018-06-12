@@ -50,7 +50,6 @@ ok      $r, 'relationship_exists returns true';
 $t->reset_response;
 
 # Net::Twitter calls used by POE::Component::Server::Twirc
-ok      $nt->new_direct_message({ user => 'marge', text => 'hello, world' }), 'new_direct_message';
 ok      $nt->friends({page => 2}), 'friends';
 cmp_ok  $t->arg('page'), '==', 2, 'page argument passed';
 ok      $nt->followers({page => 2}), 'followers';

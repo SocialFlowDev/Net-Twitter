@@ -18,10 +18,6 @@ my @tests = (
     [ enable_notifications   => sub { [ $screen_name ] }, { screen_name => $screen_name, device => 'true' }, POST => "/friendships/update.json", __LINE__ ],
     [ enable_notifications   => sub { [ { screen_name => $screen_name } ] }, { screen_name => $screen_name, device => 'true' }, POST => "/friendships/update.json", __LINE__ ],
     [ friendship_exists      => sub { [ 'a', 'b'              ] }, { source_screen_name => 'a', target_screen_name => 'b' }, GET  => "/friendships/show.json", __LINE__, '{"relationship":{"target":{"followed_by":true}}}' ],
-    [ new_direct_message     => sub { [ $screen_name, { text => $status } ] }, { screen_name => $screen_name, text => $status }, POST => "/direct_messages/new.json", __LINE__ ],
-    [ new_direct_message     => sub { [ $screen_name, $status ] }, { screen_name => $screen_name, text => $status }, POST => "/direct_messages/new.json", __LINE__ ],
-    [ new_direct_message     => sub { [ { user => $screen_name, text => $status } ] }, { screen_name => $screen_name, text => $status }, POST => "/direct_messages/new.json", __LINE__ ],
-    [ new_direct_message     => sub { [ 1234, $status ] }, { user_id => 1234, text => $status }, POST => "/direct_messages/new.json", __LINE__ ],
 );
 
 plan tests => @tests + 1;
