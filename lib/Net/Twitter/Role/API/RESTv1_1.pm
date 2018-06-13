@@ -306,29 +306,11 @@ Important: this method requires an access token with RWD (read, write, and
 direct message) permissions.
 EOT
 
-    path     => 'direct_messages',
+    path     => 'direct_messages/events/list',
     method   => 'GET',
     params   => [qw/since_id max_id count page include_entities skip_status/],
     required => [],
     booleans => [qw/include_entities skip_status/],
-    returns  => 'ArrayRef[DirectMessage]',
-);
-
-twitter_api_method sent_direct_messages => (
-    description => <<'EOT',
-Returns a list of the 20 most recent direct messages sent by the authenticating
-user including detailed information about the sending and recipient users.
-
-Important: this method requires an access token with RWD (read, write, and
-direct message) permissions.
-EOT
-
-    aliases  => [qw/direct_messages_sent/],
-    path     => 'direct_messages/sent',
-    method   => 'GET',
-    params   => [qw/since_id max_id page count include_entities/],
-    booleans => [qw/include_entities/],
-    required => [qw//],
     returns  => 'ArrayRef[DirectMessage]',
 );
 
@@ -342,7 +324,7 @@ Important: this method requires an access token with RWD (read, write, and
 direct message) permissions.
 EOT
 
-    path     => 'direct_messages/show',
+    path     => 'direct_messages/events/show',
     method   => 'GET',
     params   => [qw/id/],
     booleans => [],
@@ -360,8 +342,8 @@ Important: this method requires an access token with RWD (read, write, and
 direct message) permissions.
 EOT
 
-    path     => 'direct_messages/destroy',
-    method   => 'POST',
+    path     => 'direct_messages/events/destroy',
+    method   => 'DELETE',
     params   => [qw/id include_entities/],
     booleans => [qw/include_entities/],
     required => [qw/id/],
@@ -379,12 +361,13 @@ Important: this method requires an access token with RWD (read, write, and
 direct message) permissions.
 EOT
 
-    path     => 'direct_messages/new',
+    path     => 'direct_messages/events/new',
     method   => 'POST',
-    params   => [qw/user_id screen_name text/],
+    params   => [qw/type recipient_id message_data/],
     booleans => [qw//],
-    required => [qw/text/],
+    required => [qw/type recipient_id message_data/],
     returns  => 'DirectMessage',
+    content_type => 'application/json',
 );
 
 around new_direct_message => sub {
@@ -392,21 +375,11 @@ around new_direct_message => sub {
     my $self = shift;
 
     my $args = ref $_[-1] eq ref {} ? pop : {};
-    $args->{user} = shift unless exists $args->{user} || exists $args->{screen_name} || exists $args->{user_id};
-    $args->{text} = shift unless exists $args->{text};
+    $args->{type} = shift unless exists $args->{type};
+    $args->{recipient_id} = shift unless exists $args->{recipient_id};
+    $args->{message_data} = shift unless exists $args->{message_data};
 
     croak "too many args" if @_;
-
-    if ( my $user = delete $args->{user} ) {
-        warn "user argument to new_direct_message deprecated; use screen_name or user_id";
-
-        if ( $user =~ /^\d+$/ ) {
-            $args->{user_id} = $user;
-        }
-        else {
-            $args->{screen_name} = $user;
-        }
-    }
 
     return $self->$orig($args);
 };
