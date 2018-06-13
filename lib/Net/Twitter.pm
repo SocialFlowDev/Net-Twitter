@@ -94,7 +94,7 @@ sub _create_anon_class {
             push @comps, $t;
         }
 
-        my $ver = $Net::Twitter::Core::VERSION;
+        my $ver = $Net::Twitter::Core::VERSION || 1;
         $ver =~ s/\W/_/g;
 
         return __PACKAGE__ . "_v${ver}_" .  join '__', 'with', sort @comps;
@@ -160,5 +160,7 @@ Net::Twitter - A perl interface to the Twitter API
 
 =head1 DESCRIPTION
 
-See Net/Twitter.pod
+This module has been superseded by L<Twitter::API>. Please update your applications and/or downstream dependent modules as soon as possible. 
+
+
 
