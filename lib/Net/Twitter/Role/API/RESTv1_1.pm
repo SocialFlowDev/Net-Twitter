@@ -6,7 +6,7 @@ use Net::Twitter::API;
 use DateTime::Format::Strptime;
 use URI;
 
-with 'Net::Twitter::Role::API::UploadMedia';
+with qw/Net::Twitter::Role::API::UploadMedia Net::Twitter::Role::API::Media/;
 
 # API v1.1 incorporates the Search and Upload APIs
 excludes map "Net::Twitter::Role::$_", qw/API::Search API::Upload Net::Twitter::Role::RateLimit/;
@@ -134,7 +134,7 @@ twitter_api_method update => (
     method     => 'POST',
     params     => [qw/
         attachment_url display_coordinates in_reply_to_status_id lat long
-        media_ids place_id status trim_user
+        media_ids place_id status trim_user additional_media_info
     /],
     required   => [qw/status/],
     booleans   => [qw/display_coordinates trim_user/],

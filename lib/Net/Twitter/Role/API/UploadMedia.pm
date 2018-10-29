@@ -41,6 +41,16 @@ twitter_api_method upload_status => (
     description => 'Check the status for async video uploads.'
 );
 
+twitter_api_method upload_status => (
+    path        => 'media/upload',
+    method      => 'GET',
+    params      => [qw/media_id command/],
+    required    => [qw/media_id command/],
+    booleans    => [qw//],
+    returns     => 'status',
+    description => 'Check the status for async video uploads.'
+);
+
 1;
 
 __END__
