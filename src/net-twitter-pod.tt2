@@ -1,12 +1,6 @@
-#!/usr/bin/env perl
-
 =head1 NAME
 
 Net::Twitter - A perl interface to the Twitter API
-
-=head1 VERSION
-
-version [% VERSION %]
 
 =head1 SYNOPSIS
 
@@ -54,8 +48,12 @@ L<Net::Twitter::Manual::MigratingToV1_1>.
 
 =head1 DESCRIPTION
 
+This module has been superseded by L<Twitter::API>. Please update as
+soon as you possibly can to use new features and the new API
+versions. This module will no longer be supported.
+
 This module provides a perl interface to the Twitter APIs.  See
-L<http://dev.twitter.com/doc> for a full description of the Twitter APIs.
+L<http://dev.twitter.com/docs> for a full description of the Twitter APIs.
 
 =head1 TWITTER API VERSION 1.1
 
@@ -137,7 +135,7 @@ Provides support for the Twitter REST API version 1.1 methods.
 
 =item API::Search
 
-Provides support for the Twitter Search API methods.
+Deprecated. Use L</search> in API::RESTv1_1 instead.
 
 =item AppAuth
 
@@ -533,7 +531,7 @@ each API method, Net::Twitter supports additional I<synthetic> arguments.
 When set to 1, Net::Twitter will provide an Authorization header for the API
 call; when set to 0, it will suppress the Authentication header.  This argument
 overrides the defined authentication behavior for the API method.  It is
-probably only useful for the C<rate_limit_satus> method which returns different
+probably only useful for the C<rate_limit_status> method which returns different
 values for authenticated and unauthenticated calls.  See L</AUTHENTICATION> for
 more details.
 
@@ -598,8 +596,8 @@ to indicate the numerical ID of the Twitter user that sent the status.
 
 =head2 Methods
 
-[% INCLUDE APIDOC class='API::RESTv1_1' %]
-[% INCLUDE APIDOC class='API::Upload' %]
+[% INCLUDE APIDOC class='API::RESTv1_1' twitter_doc_links=1 %]
+[% INCLUDE APIDOC class='API::Upload' twitter_doc_links=1 %]
 
 =head1 Search API Methods
 
@@ -856,7 +854,9 @@ FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
 SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES.
 
-[% BLOCK APIDOC %]
+[% BLOCK APIDOC;
+   DEFAULT twitter_doc_links=0
+%]
 
 =over 4
 
@@ -891,7 +891,12 @@ SUCH DAMAGES.
 [% method.description %]
 
 Returns: [% method.returns %]
+[% IF twitter_doc_links AND NOT method.deprecated -%]
 
+Twitter API documentation: L<[% method.method | upper %] [% method.path
+    %]|https://dev.twitter.com/rest/reference/[% method.method | lower
+    %]/[% method.path %]>
+[% END %]
 [% END -%]
 
 =back

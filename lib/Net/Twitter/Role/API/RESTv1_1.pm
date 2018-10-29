@@ -132,7 +132,10 @@ authenticating user must be the author of the specified status.
 twitter_api_method update => (
     path       => 'statuses/update',
     method     => 'POST',
-    params     => [qw/media_ids status lat long place_id display_coordinates in_reply_to_status_id trim_user additional_media_info/],
+    params     => [qw/
+        attachment_url display_coordinates in_reply_to_status_id lat long
+        media_ids place_id status trim_user additional_media_info
+    /],
     required   => [qw/status/],
     booleans   => [qw/display_coordinates trim_user/],
     add_source => 1,
@@ -204,6 +207,7 @@ Retweets a tweet.
 );
 
 twitter_api_method update_with_media => (
+    deprecated  => 1,
     path        => 'statuses/update_with_media',
     method      => 'POST',
     params      => [qw/
@@ -214,6 +218,10 @@ twitter_api_method update_with_media => (
     returns     => 'Status',
     description => <<'EOT',
 Updates the authenticating user's status and attaches media for upload.
+
+Note that Twitter has marked this endpoint as B<deprecated>, and recommends
+instead calling C<upload>, then (optionally) C<create_media_metadata>, then
+C<update>.
 
 The C<media[]> parameter is an arrayref with the following interpretation:
 
@@ -306,29 +314,11 @@ Important: this method requires an access token with RWD (read, write, and
 direct message) permissions.
 EOT
 
-    path     => 'direct_messages',
+    path     => 'direct_messages/events/list',
     method   => 'GET',
     params   => [qw/since_id max_id count page include_entities skip_status/],
     required => [],
     booleans => [qw/include_entities skip_status/],
-    returns  => 'ArrayRef[DirectMessage]',
-);
-
-twitter_api_method sent_direct_messages => (
-    description => <<'EOT',
-Returns a list of the 20 most recent direct messages sent by the authenticating
-user including detailed information about the sending and recipient users.
-
-Important: this method requires an access token with RWD (read, write, and
-direct message) permissions.
-EOT
-
-    aliases  => [qw/direct_messages_sent/],
-    path     => 'direct_messages/sent',
-    method   => 'GET',
-    params   => [qw/since_id max_id page count include_entities/],
-    booleans => [qw/include_entities/],
-    required => [qw//],
     returns  => 'ArrayRef[DirectMessage]',
 );
 
@@ -342,7 +332,7 @@ Important: this method requires an access token with RWD (read, write, and
 direct message) permissions.
 EOT
 
-    path     => 'direct_messages/show',
+    path     => 'direct_messages/events/show',
     method   => 'GET',
     params   => [qw/id/],
     booleans => [],
@@ -360,8 +350,8 @@ Important: this method requires an access token with RWD (read, write, and
 direct message) permissions.
 EOT
 
-    path     => 'direct_messages/destroy',
-    method   => 'POST',
+    path     => 'direct_messages/events/destroy',
+    method   => 'DELETE',
     params   => [qw/id include_entities/],
     booleans => [qw/include_entities/],
     required => [qw/id/],
@@ -379,12 +369,13 @@ Important: this method requires an access token with RWD (read, write, and
 direct message) permissions.
 EOT
 
-    path     => 'direct_messages/new',
+    path     => 'direct_messages/events/new',
     method   => 'POST',
-    params   => [qw/user_id screen_name text/],
+    params   => [qw/type recipient_id message_data/],
     booleans => [qw//],
-    required => [qw/text/],
+    required => [qw/type recipient_id message_data/],
     returns  => 'DirectMessage',
+    content_type => 'application/json',
 );
 
 around new_direct_message => sub {
@@ -392,21 +383,11 @@ around new_direct_message => sub {
     my $self = shift;
 
     my $args = ref $_[-1] eq ref {} ? pop : {};
-    $args->{user} = shift unless exists $args->{user} || exists $args->{screen_name} || exists $args->{user_id};
-    $args->{text} = shift unless exists $args->{text};
+    $args->{type} = shift unless exists $args->{type};
+    $args->{recipient_id} = shift unless exists $args->{recipient_id};
+    $args->{message_data} = shift unless exists $args->{message_data};
 
     croak "too many args" if @_;
-
-    if ( my $user = delete $args->{user} ) {
-        warn "user argument to new_direct_message deprecated; use screen_name or user_id";
-
-        if ( $user =~ /^\d+$/ ) {
-            $args->{user_id} = $user;
-        }
-        else {
-            $args->{screen_name} = $user;
-        }
-    }
 
     return $self->$orig($args);
 };
@@ -702,8 +683,8 @@ user credentials are valid.
 
     path     => 'account/verify_credentials',
     method   => 'GET',
-    params   => [qw/include_entities skip_status/],
-    booleans => [qw/include_entities skip_status/],
+    params   => [qw/include_entities skip_status include_email/],
+    booleans => [qw/include_entities skip_status include_email/],
     required => [qw//],
     returns  => 'ExtendedUser',
 );
@@ -945,6 +926,7 @@ the first 1000 matches from this API.
 );
 
 twitter_api_method contributees => (
+    deprecated  => 1,
     path        => 'users/contributees',
     method      => 'GET',
     params      => [qw/user_id screen_name include_entities skip_satus/],
@@ -957,6 +939,7 @@ Returns an array of users that the specified user can contribute to.
 );
 
 twitter_api_method contributors => (
+    deprecated  => 1,
     path        => 'users/contributors',
     method      => 'GET',
     params      => [qw/user_id screen_name include_entities skip_satus/],
@@ -982,31 +965,44 @@ require authentication.
 );
 
 twitter_api_method user_suggestions_for => (
-    aliases     => [qw/follow_suggestions/],
-    path        => 'users/suggestions/:category',
+    aliases     => [qw/follow_suggestions_for/],
+    path        => 'users/suggestions/:slug',
     method      => 'GET',
-    params      => [qw/category lang/],
-    required    => [qw/category/],
+    params      => [qw/slug lang/],
+    required    => [qw/slug/],
     returns     => 'ArrayRef',
     description => <<''
-Access the users in a given category of the Twitter suggested user list.
+Access the users in a given slug (category) of the Twitter suggested user list.
 
 );
 
 twitter_api_method user_suggestions => (
     aliases     => [qw/follow_suggestions/],
-    path        => 'users/suggestions/:category/members',
+    path        => 'users/suggestions/:slug/members',
     method      => 'GET',
-    params      => [qw/category lang/],
-    required    => [qw/category/],
+    params      => [qw/slug lang/],
+    required    => [qw/slug/],
     returns     => 'ArrayRef',
     description => <<''
-Access the users in a given category of the Twitter suggested user list and
-return their most recent status if they are not a protected user. Currently
-supported values for optional parameter C<lang> are C<en>, C<fr>, C<de>, C<es>,
-C<it>.  Does not require authentication.
+Access the users in a given slug (category) of the Twitter suggested user list
+and return their most recent status if they are not a protected user.
+Currently supported values for optional parameter C<lang> are C<en>, C<fr>,
+C<de>, C<es>, C<it>.  Does not require authentication.
 
 );
+
+# backwards compatibility: Twitter renamed "category" to "slug"
+around [ qw/follow_suggestions follow_suggestions_for user_suggestions
+user_suggestions_for/ ] => sub {
+    my ( $next, $self ) = splice @_, 0, 2;
+
+    my $args = ref $_[-1] eq 'HASH' ? pop : {};
+    if ( exists $args->{category} ) {
+        $args->{slug} = delete $args->{category};
+    }
+
+    return $self->$next(@_, $args);
+};
 
 twitter_api_method favorites => (
     description => <<'',
@@ -1392,12 +1388,26 @@ twitter_api_method geo_id => (
     description => <<'',
 Returns details of a place returned from the C<reverse_geocode> method.
 
-    path => 'geo/id/:id',
-    method => 'GET',
-    params => [qw/id/],
-    required => [qw/id/],
+    path     => 'geo/id/:place_id',
+    method   => 'GET',
+    params   => [qw/place_id/],
+    required => [qw/place_id/],
     returns  => 'HashRef',
 );
+
+# backwards compat for 'geo/id/:id'
+# recast to 'geo/id/:place_id
+around geo_id => sub {
+    my ( $next, $self ) = splice @_, 0, 2;
+
+    my $args = ref $_[-1] eq 'HASH' ? pop @_ : {};
+
+    if ( exists $args->{id} ) {
+        $args->{place_id} = delete $args->{id};
+    }
+
+    return $self->$next(@_, $args);
+};
 
 twitter_api_method reverse_geocode => (
     description => <<EOT,
@@ -2108,8 +2118,16 @@ twitter_api_method create_media_metadata => (
     params      => [qw/media_id alt_text/],
     required    => [qw/media_id/],
     returns     => 'HashRef',
-    description => 'add metadata to media',
-    content_type => 'application/json'
+    content_type => 'application/json',
+    description => <<'EOT',
+Adds metadata -- alt text, in particular -- to a previously uploaded media
+object, specified by its ID. (One knows this ID via the return value of the
+preceding C<upload> call.)
+
+The C<alt_text> parameter must have as its value a hashref containing a single
+key-value pair. The key must be C<text>, and the value is the alt text to assign
+to the media object. The text must be 400 characters or fewer in length.
+EOT
 );
 
 # infer screen_name or user_id from positional args for backwards compatibility

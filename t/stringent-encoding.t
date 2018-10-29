@@ -5,8 +5,9 @@ use URI;
 use Net::Twitter;
 use Net::OAuth::Message;
 use Test::More;
+use JSON::MaybeXS qw/decode_json/;
 
-plan tests => 2;
+plan tests => 1;
 
 # Ensure post args are encoded per the OAuth spec
 #
@@ -33,12 +34,20 @@ $nt->ua->add_handler(request_send => sub {
 });
 
 my $text = q[Bob's your !@##$%^&*(){}} uncle!];
-$nt->new_direct_message({ screen_name => 'perl_api', text => $text });
+$nt->new_direct_message(
+    event => {
+        type => 'message_create',
+        message_create => {
+            target => {
+                recipient_id => 1564061,
+            },
+            message_data => {
+                text => $text
+            },
+        }
+    },
+);
 
-my $encoded_text = Net::OAuth::Message::encode($text);
-like $req->content, qr/\E$encoded_text/, 'properly encoded';
-
-my $uri = URI->new($req->uri);
-$uri->query($req->content);
-my %params = $uri->query_form;
-is $params{text}, $text, 'decoded text matches';
+my $content = decode_json($req->content);
+my $content_text = $content->{message_create}{message_data}{text};
+is $content_text, $text, 'properly encoded and text matches';
