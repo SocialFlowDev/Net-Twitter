@@ -76,6 +76,17 @@ Removes specified media library item and returns a response code of 200 for succ
 
 );
 
+twitter_api_method get_amplify_programs => (
+    path => 'media/monetization/amplify/programs',
+    method => 'GET',
+    params => [qw/owner_id publisher_id/],
+    required => [qw/owner_id publisher_id/],
+    returns => 'HashRef',
+    description => <<'',
+.
+
+);
+
 twitter_api_method get_monetization_categories => (
     path => 'media/monetization/categories',
     method => 'GET',
