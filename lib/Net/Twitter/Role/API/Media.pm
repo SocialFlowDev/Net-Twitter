@@ -121,3 +121,19 @@ Update Amplify Open monetization options for a video. Will update all tweets con
 );
 
 1;
+
+__END__
+
+=head1 NAME
+
+Net::Twitter::Role::API::Media
+
+=head1 SYNOPSIS
+
+  package My::Twitter;
+  use Moose;
+  with 'Net::Twitter::API::Media';
+
+=head1 DESCRIPTION
+
+This module provides definitions the Twitter Pro Media API methods.
