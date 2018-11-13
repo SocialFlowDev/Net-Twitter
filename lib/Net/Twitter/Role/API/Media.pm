@@ -87,6 +87,17 @@ twitter_api_method get_amplify_programs => (
 
 );
 
+twitter_api_method get_amplify_program => (
+    path => 'media/monetization/amplify/program',
+    method => 'GET',
+    params => [qw/owner_id program_id/],
+    required => [qw/owner_id program_id/],
+    returns => 'HashRef',
+    description => <<'',
+.
+
+);
+
 twitter_api_method get_monetization_categories => (
     path => 'media/monetization/categories',
     method => 'GET',
