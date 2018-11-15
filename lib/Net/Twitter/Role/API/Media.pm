@@ -98,6 +98,28 @@ twitter_api_method get_amplify_program => (
 
 );
 
+twitter_api_method amplify_get_tweets => (
+    path => 'media/monetization/amplify/getTweets',
+    method => 'GET',
+    params => [qw/owner_id program_id/],
+    required => [qw/owner_id program_id/],
+    returns => 'HashRef',
+    description => <<'',
+.
+
+);
+
+twitter_api_method amplify_add_tweet => (
+    path => 'media/monetization/amplify/addTweet',
+    method => 'POST',
+    params => [qw/owner_id program_ids tweet_id/],
+    required => [qw/owner_id program_ids tweet_id/],
+    content_type => 'application/json',
+    description => <<'',
+.
+
+);
+
 twitter_api_method get_monetization_categories => (
     path => 'media/monetization/categories',
     method => 'GET',
