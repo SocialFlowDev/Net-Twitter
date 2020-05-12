@@ -51,6 +51,16 @@ twitter_api_method upload_status => (
     description => 'Check the status for async video uploads.'
 );
 
+twitter_api_method media_subtitles_create => (
+    path => 'media/subtitles/create',
+    method => 'POST',
+    params => [qw/media_id media_category subtitle_info/],
+    required => [qw/owner_id media_id metadata/],
+    content_type => 'application/json',
+    description => 'Associate uploaded subtitles to an uploaded video',
+
+);
+
 1;
 
 __END__
