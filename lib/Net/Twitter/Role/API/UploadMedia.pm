@@ -58,6 +58,15 @@ twitter_api_method media_subtitles_create => (
     required => [qw/owner_id media_id metadata/],
     content_type => 'application/json',
     description => 'Associate uploaded subtitles to an uploaded video',
+);
+
+twitter_api_method media_subtitles_delete => (
+    path => 'media/subtitles/delete',
+    method => 'POST',
+    params => [qw/media_id media_category subtitle_info/],
+    required => [qw/media_id media_category subtitle_info/],
+    content_type => 'application/json',
+    description => 'Dissociate subtitles from a video and delete the subtitles.',
 
 );
 
